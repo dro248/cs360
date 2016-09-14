@@ -77,6 +77,14 @@ Server::serve() {
     close_socket();
 }
 
+Message Server::parse_request(string request) {
+    
+}
+
+void Server::get_value(int client,Message message) {
+
+}
+
 void
 Server::handle(int client) {
     // loop to handle all requests
@@ -86,8 +94,13 @@ Server::handle(int client) {
         // break if client is done or an error occurred
         if (request.empty())
             break;
-        // send response
-        bool success = send_response(client,request);
+        // parse request
+        Message message = parse_request(request);
+        // get more characters if needed
+        if (message.needed())
+            get_value(client,message);
+        // do something
+        bool success = false;//handle_message(client,message);
         // break if an error occurred
         if (not success)
             break;
