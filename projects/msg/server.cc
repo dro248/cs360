@@ -122,8 +122,7 @@ bool Server::needsMoreData(string &cmd) {
     return cmd=="put";
 }
 
-void
-Server::handle(int client) {
+void Server::handle(int client) {
     while (1) {
         string request = get_request(client);
 
@@ -147,8 +146,7 @@ Server::handle(int client) {
     close(client);
 }
 
-string
-Server::get_request(int client) {
+string Server::get_request(int client) {
     string request = "";
     // read until we get a newline
     while (request.find("\n") == string::npos) {
