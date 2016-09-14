@@ -10,14 +10,10 @@ using namespace std;
 int
 main(int argc, char **argv)
 {
-    cout << "ASDFASDFASDFASDF";
     int option, port;
 
     // setup default arguments
     port = 3000;
-Message m = Message();
-m.setValue("hello");
-cout << m.getValue();
     // process command line options using getopt()
     // see "man 3 getopt"
     while ((option = getopt(argc,argv,"p:")) != -1) {

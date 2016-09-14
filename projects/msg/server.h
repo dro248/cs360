@@ -11,6 +11,8 @@
 #include <sstream>
 
 #include <string>
+#include <sstream>
+#include <vector>
 
 #include "message.h"
 
@@ -26,15 +28,17 @@ public:
 private:
     void create();
     void close_socket();
-    Message parse_request(string);
+    vector<string> parse_request(string);
     void serve();
-    void get_value(int, Message);
+    string get_value(int, int);
     void handle(int);
     string get_request(int);
     bool send_response(int, string);
+    bool needsMoreData(string&);
 
     int port_;
     int server_;
     int buflen_;
     char* buf_;
+    string cache_;
 };

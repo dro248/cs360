@@ -3,8 +3,9 @@
 Server::Server(int port) {
     // setup variables
     port_ = port;
-    buflen_ = 1024;
+    buflen_ = 10000;
     buf_ = new char[buflen_+1];
+    cache_ = "";
 }
 
 Server::~Server() {
@@ -77,31 +78,69 @@ Server::serve() {
     close_socket();
 }
 
-Message Server::parse_request(string request) {
-    
+vector<string> Server::parse_request(string request) {
+    stringstream ss;
+    ss << request;
+    string field;
+    vector<string> fields;
+    while (ss >> field) {
+        fields.push_back(field);
+    }
+    return fields;
 }
 
-void Server::get_value(int client,Message message) {
+string Server::get_value(int client,int length) {
+    string request = cache_;
+    cache_ = "";
+    // read until we get a newline
+    while (request.length() < length) {
+        int nread = recv(client,buf_,buflen_,0);
+        if (nread < 0) {
+            if (errno == EINTR)
+                continue;
+            else {
+                // need to retun error to client
+                return request;
+            }
+        } else if (nread == 0) {
+            //TODO: return error to client
+            return request;
+        }
+        // be sure to use append in case we have binary data
+        request.append(buf_,nread);
+    }
+    //clear the cache after the request has been saved into string request
+    cache_ = "";
+    return request;
+}
 
+bool handle_message(int client, Message msg) {
+    return false;
+}
+
+bool Server::needsMoreData(string &cmd) {
+    return cmd=="put";
 }
 
 void
 Server::handle(int client) {
-    // loop to handle all requests
     while (1) {
-        // get a request
         string request = get_request(client);
-        // break if client is done or an error occurred
+
         if (request.empty())
             break;
-        // parse request
-        Message message = parse_request(request);
-        // get more characters if needed
-        if (message.needed())
-            get_value(client,message);
-        // do something
-        bool success = false;//handle_message(client,message);
-        // break if an error occurred
+
+        vector<string> req_fields = parse_request(request);
+        Message msg = Message();
+
+        if (needsMoreData(req_fields[0])) {
+            string message = get_value(client,stoi(req_fields[3]));
+            msg.setValue(message);            
+        }
+        msg.setCommand(req_fields[0]);
+
+        bool success = handle_message(client,msg);
+
         if (not success)
             break;
     }
@@ -128,8 +167,10 @@ Server::get_request(int client) {
         // be sure to use append in case we have binary data
         request.append(buf_,nread);
     }
-    // a better server would cut off anything after the newline and
-    // save it in a cache
+    cache_ = "";
+    //there should always be a newline
+    cache_ = request.substr(request.find("\n"));
+    request = request.substr(0, request.find("\n"));
     return request;
 }
 

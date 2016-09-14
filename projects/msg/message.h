@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -9,11 +10,13 @@ private:
 	string name;
 	int length;
 	string value;
+	vector<string> cmd_fields;
 
 public:
 	Message();
 	~Message();
 	bool needed();
+	bool hasMessage();
 
 	/********************\
 	 Getters and setters
@@ -23,8 +26,10 @@ public:
 	string getName();
 	int getLength();
 	string getValue();
-	void setCommand(string command);
-	void setName(string name);
-	void setLength(int length);
-	void setValue(string value);
+	vector<string> getCmdFields();
+	void setCommand(string);
+	void setName(string);
+	void setLength(int);
+	void setValue(string);
+	void setCmdFields(vector<string>);
 };

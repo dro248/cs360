@@ -8,7 +8,7 @@ OBJS =			$(ECHO-SERVER) $(ECHO-CLIENT)
 
 LIBS=
 
-CCFLAGS= -g
+CCFLAGS= -g -std=c++11
 
 all:	echo-server echo-client
 

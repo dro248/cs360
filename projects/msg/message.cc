@@ -8,11 +8,15 @@ Message::Message() {
 }
 
 Message::~Message() {
-	
+
 }
 
 bool Message::needed() {
 	return false;
+}
+
+bool Message::hasMessage() {
+	return command=="put";
 }
 
 /********************\
@@ -35,6 +39,10 @@ string Message::getValue() {
 	return value;
 }
 
+vector<string> Message::getCmdFields() {
+	return cmd_fields;
+}
+
 void Message::setCommand(string command) {
 	this->command = command;
 }
@@ -49,4 +57,8 @@ void Message::setLength(int length) {
 
 void Message::setValue(string value) {
 	this->value = value;
+}
+
+void Message::setCmdFields(vector<string> cf) {
+	this->cmd_fields = cf;
 }
