@@ -1,0 +1,50 @@
+!!!!!!!!!!!!!
+===SOCKETS===
+!!!!!!!!!!!!!
+
+netstat -nl
+
+loopback is an interface to talk to yourself.
+local Address and foreign address specify which ip's are allowed to communicate on which ports.
+
+CLient API
+	socket(): create a socket endpoint
+	connect(): onnect to a server
+	send(): send data
+	recv(): receive data
+	close(): close the socket
+
+===========================================================================================
+int socket(int domain, int type, int protool);
+
+domain = PF_INET // the internet has taken over the world so we use that
+type = SOCK_STREAM for TCP, SOCK_DGRAM for UDP
+protocol = 0 // don't use this one very much anymore because it is just really old
+
+* on success returns a socket descriptor // the int returned is just the index of the socket
+===========================================================================================
+int connect(int sockfd, const struct sockaddr *serv_addr, socklen_t addrlen);
+
+to connect to a server
+on success returns 0;
+on failure returns -1 and sets the global variable errno
+===========================================================================================
+
+ssizwe_t send(int s, const void *buf, size_t len, int flags);
+ssize_t recv(int s, void *buf, size_t len, int flags);
+s= socket
+buf = pointer to buffer
+len = buffer len
+on success returns the number of bytes actually sent or received
+
+recv() will return 0 when the socket is closed
+on error returns -1 and sets errno
+
+===========================================================================================
+#include <unistd.h>
+
+int close(int fd);
+
+==========================================================================================
+
+

@@ -1,0 +1,75 @@
+Some goals:
+	talk about transport layer.
+
+TCP: connection-oriented
+	provides reliable ordered byte stream
+	flow control
+	congestion control
+	used by applications: web, file transfer, remote login, email
+################
+===Congestion===
+################
+delay is caused by queuing
+loss is caused by queue overflow
+The packets are arriving faster than they can be serviced
+The internet needs congestion control to avoid persistent queue overflow
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+===TCP CONGESTION CONTROL===
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+take 460 to learn more!
+
+
+UDP lets you send a packet and doesn't resend dropped packets.
+connectionless
+unreliable
+no flow control
+no congestion control
+good for:
+	broadcasting to DHCP
+	query response
+	DNS
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+===NETWORK LAYER SERVICES===
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+routing protocols
+stability : paths must not change too often
+scalability : must handle ever possible destination on the internet
+policy : allow network administration to choose paths based on economic agreements between providers
+security : 
+
+
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+===LINK AND PHYSICAL LAYERS===
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+link layers: sends a frame on one link
+physical layer: sends bits on one link
+
+**************
+===SECURITY===
+**************
+Was NOT considered when the internet was built
+goal when making it: develop one internetwork for all existing networks
+second lvl goals:
+	survivability: continue working through natural disasters and stuff. need to be a distrubuted system (we thought of that becuase it was being developed during the cold war
+	multiple types of services : up front they wanted to support a variety of networks
+	distributed management
+	cost effective
+	host attachment with low effort
+	accountable resources
+
+We've been playing cat and mouse since the creation.
+When email was set up, it was to leave online chat messages to someone who is not online at the time.
+magnification attacks!!!! Try it with a botnet!!! even better!!!
+
+
+^^^^^^^^^^^^^
+===SOCKETS===
+^^^^^^^^^^^^^
+to talk to a process on another machine, you nedd to identify it
+	- ip address : identifies the machine
+	- port number : identifies the socket the process is using
+IP addresses identify an interface, not a machine
+ifconfig will list all of your interfaces
+
