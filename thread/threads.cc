@@ -11,29 +11,26 @@
 #include <thread>
 #include <mutex>
 
+#include "task.h"
+
 using namespace std;
 
-int globyl = 0;
-
-void storeInt(int a, mutex* m) {
-	m->lock();
-	cout << "Storing " << a << endl;
-	globyl = a;
-	m->unlock();
+void write_(Task* task) {
+	task->write();
 }
 
-void readInt() {
-	cout << "Reading " << globyl << endl;
+void read_(Task* task) {
+	task->read();
 }
-	
 
 int main(int argc, char **argv) {
 	mutex m;
+	Task* task = new Task(&m);
 	
 	thread a;
 	thread b;
-	a = thread(storeInt, rand()%100, &m);
-	b = thread(readInt);
+	a = thread(write_, task);
+	b = thread(read_, task);
 	
 	a.join();
 	b.join();

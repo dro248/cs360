@@ -1,21 +1,21 @@
 CXX=		g++ $(CCFLAGS) $(LIBS)
-EXAMPLE=    thw.o
-OBJS =		$(EXAMPLE)
+threads=	threads.o
+OBJS =		$(threads)
 
 LIBS=		-pthread -std=c++11
 
 CCFLAGS= -g
 
-all:		example
+all:		threads
 
-example:	$(EXAMPLE)
-		$(CXX) -o example $(EXAMPLE) $(LIBS)
+threads:	$(threads)
+		$(CXX) -o threads $(threads) $(LIBS)
 
 clean:
 		rm -f $(OBJS) $(OBJS:.o=.d)
 
 realclean:
-		rm -f $(OBJS) $(OBJS:.o=.d) example
+		rm -f $(OBJS) $(OBJS:.o=.d) threads
 
 %.o : %.cc
 		$(CXX) -c -o $@ -MD -MP ${CPPFLAGS} ${CXXFLAGS} $<
