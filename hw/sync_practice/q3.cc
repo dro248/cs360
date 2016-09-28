@@ -27,6 +27,7 @@ void head_robot_run(factory_params params) {
 			params.order_waiting->wait(u_lock);
 		}
 		// preparing the order
+		sleep(1);
 		cout << "Order: " << params.orders->at(0) << " ready." << endl;
 		params.orders->erase(params.orders->begin());
 		(*params.orders_processed)++;
@@ -37,17 +38,18 @@ void head_robot_run(factory_params params) {
 	// handle thread cancellation
 }
 
-void drone_run(factory_params params) {
+void drone_run(factory_params params, int thread_id) {
 	while (*params.num_orders<ORDER_MAX) {
 		// placing an order
+		sleep(1);
 		int an_order = rand() % 100;
 	
 		params.m->lock();
 		if (*params.num_orders >= 15) {
 			params.m->unlock();
-			break;
+			continue;
 		}
-		cout << "Adding order: " << an_order << endl;
+		cout << "Adding order: " << an_order << " (Thread NUM: " << thread_id << ")" << endl;
 		params.orders->push_back(an_order);
 		params.order_waiting->notify_one();
 		// increment the amount of orders placed
@@ -85,7 +87,7 @@ int main(int argc, char** argv) {
 	head_robot = thread(head_robot_run,prms);
 	for (int i = 0; i < num_drones; ++i) {
 		//make drones
-		drones.push_back(thread(drone_run,prms));
+		drones.push_back(thread(drone_run,prms,i+1));
 	}
 
 	// wait for the threads to all come back
@@ -93,8 +95,6 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < drones.size(); ++i) {
 		drones[i].join();
 	}
-	cout << *prms.num_orders<< endl;
-	cout << *prms.orders_processed << endl;
 	return 0;
 }
 
