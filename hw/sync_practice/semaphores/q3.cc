@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <mutex>
+#include <semaphore>
 #include <condition_variable>
 #include <thread>
 
@@ -14,7 +14,7 @@ typedef struct factory_params {
 	vector<int>* orders;
 	condition_variable *order_ready;
 	condition_variable *order_waiting;
-	mutex *m;
+	sempahore *sem;
 	int *num_orders;
 	int *orders_processed;
 } factory_params;
@@ -23,9 +23,10 @@ void head_robot_run(factory_params params) {
 	while (*params.orders_processed<ORDER_MAX) {
 		//assume that the list of orders is not thread safe
 		unique_lock<mutex> u_lock(*params.m);
-		while (params.orders->size() == 0) {
-			params.order_waiting->wait(u_lock);
-		}
+		//while (params.orders->size() == 0) {
+			//params.order_waiting->wait(u_lock);
+		//}
+		params.sem->wait();
 		// preparing the order
 		sleep(1);
 		cout << "Order: " << params.orders->at(0) << " ready." << endl;
@@ -33,7 +34,7 @@ void head_robot_run(factory_params params) {
 		(*params.orders_processed)++;
 		// means the robots have made the order
 		// and it is ready for delivery
-		params.order_ready->notify_all();
+		params.sem->signal();
 	}
 	// handle thread cancellation
 }
@@ -67,7 +68,7 @@ int main(int argc, char** argv) {
 	condition_variable order_ready;
 	// order waiting means the drones placed an order
 	condition_variable order_waiting;
-	mutex m;
+	semaphore sem;
 
 	thread head_robot;
 	vector<thread> drones;
@@ -79,7 +80,7 @@ int main(int argc, char** argv) {
 		.orders = &orders,
 		.order_ready = &order_ready,
 		.order_waiting = &order_waiting,
-		.m = &m,
+		.sem = &sem,
 		.num_orders = &zero,
 		.orders_processed = &zero_
 	};
