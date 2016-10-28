@@ -99,7 +99,7 @@ class Download_Manager():
     def make_threads(self):
         """ Makes the threads for the download """
         ranges = self.gen_ranges()
-        self.start_time = time.time()
+        self.start_time = float(time.time())*1000
         for dl_range in ranges:
             self.threads.append(Dl_Range(self.url,dl_range))
 
@@ -109,7 +109,7 @@ class Download_Manager():
             thread.start()
         for thread in self.threads:
             thread.join()
-        self.end_time = time.time()
+        self.end_time = float(time.time())*1000
         
 
     def write_to_file(self):
@@ -125,7 +125,9 @@ class Download_Manager():
                 dl_file.write(thread.content)
 
     def get_stats(self):
-        stats = "[%s] [%s] [%d] [%d]" % (dlmgr.url, dlmgr.num_threads, dlmgr.content_length, (self.end_time-self.start_time)/1000)
+        logging.debug("end_time: %d" % self.end_time)
+        logging.debug("start_time: %d" % self.start_time)
+        stats = "[%s] [%s] [%d] [%f]" % (dlmgr.url, dlmgr.num_threads, dlmgr.content_length, (self.end_time-self.start_time)/1000)
         return stats
 
 def parse_options():
@@ -140,4 +142,5 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR)
     num_threads = args.number if args.number > 0 else 1
     dlmgr = Download_Manager(num_threads=num_threads, url=args.url)
+    print(dlmgr.get_stats())
 
