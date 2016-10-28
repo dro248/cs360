@@ -4,10 +4,12 @@ import threading
 import sys, logging
 import argparse
 import requests
+from urlparse import urlparse
 
 class Dl_Range(threading.Thread):
-    def __init__(self,dl_range):
+    def __init__(self,url,dl_range):
         threading.Thread.__init__(self)
+        self.url = url
         if dl_range[0] >= dl_range[1] or dl_range[0] < 0:
             logging.error("Invalid range given: %d-%d" % (dl_range[0], dl_range[1]))
             self.range = None
@@ -17,7 +19,13 @@ class Dl_Range(threading.Thread):
 
     def run(self):
         """ Download the range that is specified """
-        self.gen_headers()
+        self.get_content(self.gen_headers())
+
+    def get_content(self, headers):
+        """ Makes the GET request to get the range of content that was specified """
+        r = requests.get(self.url, headers=headers)
+        logging.debug(str(r.content))
+        self.content = r.content
 
     def gen_headers(self):
         if self.range is None:
@@ -26,11 +34,11 @@ class Dl_Range(threading.Thread):
             headers = {}
             headers["Accept-Encoding"] = "identity"
             headers["Range"] = "bytes=%d-%d" % self.range
-            logging.debug("HEADERS: %s" % str(headers))
+            logging.debug("headers: %s" % str(headers))
             return headers
 
 class Download_Manager():
-    """ handles the threading and organizing for a download """
+    """ handles the threading and organization of a download """
     def __init__(self,num_threads,url):
         self.threads = []
         self.content_length = 0
@@ -40,7 +48,7 @@ class Download_Manager():
 
     def get_content_length(self):
         """ Makes a HEAD request to the url's web server for the Content-Length """
-        head = requests.head(self.url)
+        head = requests.head(self.url, headers={"Accept-Encoding":"identity"})
         self.content_length = int(head.headers["Content-Length"])
         logging.debug("Content-Length: %s" % self.content_length)
 
@@ -53,9 +61,10 @@ class Download_Manager():
         else:
             self.make_threads()
             self.download()
+            self.write_to_file()
             
     def gen_ranges(self):
-        """ Generates the ranges using python2 stuff """
+        """ Generates the ranges = Array(Tuple()) """
         range_length = self.content_length // self.num_threads
         if range_length > 0:
             ranges = []
@@ -79,21 +88,32 @@ class Download_Manager():
         """ Makes the threads for the download """
         ranges = self.gen_ranges()
         for dl_range in ranges:
-            self.threads.append(Dl_Range(dl_range))
+            self.threads.append(Dl_Range(self.url,dl_range))
 
     def download(self):
         """ starts all of the threads """
         for thread in self.threads:
             thread.start()
+        for thread in self.threads:
+            thread.join()
 
-    def assemble(self):
+    def write_to_file(self):
         """ Puts the downloaded content back together again """
+        path = urlparse(self.url).path
+        if path is not "":
+            filename = path.split("/")[-1]
+        else:
+            filename = "index.html"
+        logging.info("writing to %s" % filename)
+        with open(filename, "w") as dl_file:
+            for thread in self.threads:
+                dl_file.write(thread.content)
 
 def parse_options():
     parser = argparse.ArgumentParser(prog="Download Accelerator", description="Threaded Static File Downloader", add_help=True)
+    parser.add_argument("-d", "--debug", action="store_true", help="Turn on logging")
     parser.add_argument("-n", "--number", type=int, action="store", help="Specify the number of threads to create",default=10)
     parser.add_argument("url", help="The url of the page that you want to download")
-    parser.add_argument("-d", "--debug", action="store_true", help="Turn on logging")
     return parser.parse_args() 
 
 if __name__ == "__main__":
