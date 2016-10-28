@@ -39,6 +39,9 @@ unix-echo-client
 # Emacs Backup
 *~
 
+# vim swap
+*swp
+
 # Dependencies
 *.d
 
