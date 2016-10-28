@@ -5,6 +5,7 @@ import sys, logging
 import argparse
 import requests
 from urlparse import urlparse
+import time
 
 class Dl_Range(threading.Thread):
     def __init__(self,url,dl_range):
@@ -24,7 +25,6 @@ class Dl_Range(threading.Thread):
     def get_content(self, headers):
         """ Makes the GET request to get the range of content that was specified """
         r = requests.get(self.url, headers=headers)
-        logging.debug(str(r.content))
         self.content = r.content
 
     def gen_headers(self):
@@ -46,6 +46,15 @@ class Download_Manager():
         self.num_threads = num_threads
         self.manage()
 
+    def real_url(self):
+        url = urlparse(self.url)
+        if url.scheme is "" or url.hostname is "":
+            logging.error("Url is bad: %s" % self.url)
+            return False
+        else:
+            logging.debug("Url is good: %s" % self.url)
+            return True
+
     def get_content_length(self):
         """ Makes a HEAD request to the url's web server for the Content-Length """
         head = requests.head(self.url, headers={"Accept-Encoding":"identity"})
@@ -54,6 +63,9 @@ class Download_Manager():
 
     def manage(self):
         """ The main logic for the downloader """
+        if not self.real_url():
+            logging.error("Exiting manage.")
+            return
         self.get_content_length()
         if self.content_length is 0:
             logging.error("Content-Length header not set. Non-Static site. Download Failed.")
@@ -87,6 +99,7 @@ class Download_Manager():
     def make_threads(self):
         """ Makes the threads for the download """
         ranges = self.gen_ranges()
+        self.start_time = time.time()
         for dl_range in ranges:
             self.threads.append(Dl_Range(self.url,dl_range))
 
@@ -96,6 +109,8 @@ class Download_Manager():
             thread.start()
         for thread in self.threads:
             thread.join()
+        self.end_time = time.time()
+        
 
     def write_to_file(self):
         """ Puts the downloaded content back together again """
@@ -109,10 +124,14 @@ class Download_Manager():
             for thread in self.threads:
                 dl_file.write(thread.content)
 
+    def get_stats(self):
+        stats = "[%s] [%s] [%d] [%d]" % (dlmgr.url, dlmgr.num_threads, dlmgr.content_length, (self.end_time-self.start_time)/1000)
+        return stats
+
 def parse_options():
     parser = argparse.ArgumentParser(prog="Download Accelerator", description="Threaded Static File Downloader", add_help=True)
     parser.add_argument("-d", "--debug", action="store_true", help="Turn on logging")
-    parser.add_argument("-n", "--number", type=int, action="store", help="Specify the number of threads to create",default=10)
+    parser.add_argument("-n", "--number", type=int, action="store", help="Specify the number of threads to create",default=1)
     parser.add_argument("url", help="The url of the page that you want to download")
     return parser.parse_args() 
 
@@ -120,5 +139,5 @@ if __name__ == "__main__":
     args = parse_options()
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR)
     num_threads = args.number if args.number > 0 else 1
-    dlmngr = Download_Manager(num_threads=num_threads, url=args.url)
+    dlmgr = Download_Manager(num_threads=num_threads, url=args.url)
 
