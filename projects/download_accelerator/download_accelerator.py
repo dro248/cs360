@@ -8,6 +8,7 @@ from urlparse import urlparse
 import time
 
 class Dl_Range(threading.Thread):
+    """ The worker Thread functionality """
     def __init__(self,url,dl_range):
         threading.Thread.__init__(self)
         self.url = url
@@ -40,26 +41,32 @@ class Dl_Range(threading.Thread):
 class Download_Manager():
     """ handles the threading and organization of a download """
     def __init__(self,num_threads,url):
-        self.threads = []
-        self.content_length = 0
-        self.url = url
-        self.num_threads = num_threads
+        self._threads = []
+        self._content_length = 0
+        self._url = url
+        self._num_threads = num_threads
+        self._end_time = 0.0
+        self._start_time = 0.0
+        self._dl_success = False
         self.manage()
 
     def real_url(self):
-        url = urlparse(self.url)
+        url = urlparse(self._url)
         if url.scheme is "" or url.hostname is "":
-            logging.error("Url is bad: %s" % self.url)
+            logging.error("Url is bad: %s" % self._url)
             return False
         else:
-            logging.debug("Url is good: %s" % self.url)
+            logging.debug("Url is good: %s" % self._url)
             return True
 
     def get_content_length(self):
         """ Makes a HEAD request to the url's web server for the Content-Length """
-        head = requests.head(self.url, headers={"Accept-Encoding":"identity"})
-        self.content_length = int(head.headers["Content-Length"])
-        logging.debug("Content-Length: %s" % self.content_length)
+        head = requests.head(self._url, headers={"Accept-Encoding":"identity"})
+        try:    
+            self._content_length = int(head.headers["Content-Length"])
+            logging.debug("Content-Length: %s" % self._content_length)
+        except:
+            logging.error("No content Length Header is set. Cannot download.")
 
     def manage(self):
         """ The main logic for the downloader """
@@ -67,7 +74,7 @@ class Download_Manager():
             logging.error("Exiting manage.")
             return
         self.get_content_length()
-        if self.content_length is 0:
+        if self._content_length is 0:
             logging.error("Content-Length header not set. Non-Static site. Download Failed.")
             return
         else:
@@ -77,19 +84,18 @@ class Download_Manager():
             
     def gen_ranges(self):
         """ Generates the ranges = Array(Tuple()) """
-        range_length = self.content_length // self.num_threads
+        range_length = self._content_length // self._num_threads
         if range_length > 0:
             ranges = []
             prev_end = -1
-            for x in xrange(0,self.num_threads):
+            for x in xrange(0,self._num_threads):
                 beg = prev_end + 1
                 prev_end += range_length
                 end = prev_end
-                if x is self.num_threads-1:
-                    if end < self.content_length:
-                        logging.debug("Final Range before change: %d" % end)
-                        end = self.content_length
-                        logging.debug("Final Range changed to %d" % end)
+                if x is self._num_threads-1:
+                    if end < self._content_length:
+                        logging.debug("Final Range before: %d, after: %d" % (end,self._content_length))
+                        end = self._content_length
                 ranges.append((beg,end))
             return ranges
         else:
@@ -99,35 +105,36 @@ class Download_Manager():
     def make_threads(self):
         """ Makes the threads for the download """
         ranges = self.gen_ranges()
-        self.start_time = float(time.time())*1000
+        self._start_time = float(time.time())*1000
         for dl_range in ranges:
-            self.threads.append(Dl_Range(self.url,dl_range))
+            self._threads.append(Dl_Range(self._url,dl_range))
 
     def download(self):
         """ starts all of the threads """
-        for thread in self.threads:
+        for thread in self._threads:
             thread.start()
-        for thread in self.threads:
+        for thread in self._threads:
             thread.join()
-        self.end_time = float(time.time())*1000
-        
+        self._end_time = float(time.time())*1000
 
     def write_to_file(self):
         """ Puts the downloaded content back together again """
-        path = urlparse(self.url).path
+        path = urlparse(self._url).path
         if path is not "":
             filename = path.split("/")[-1]
         else:
             filename = "index.html"
         logging.info("writing to %s" % filename)
         with open(filename, "w") as dl_file:
-            for thread in self.threads:
+            for thread in self._threads:
                 dl_file.write(thread.content)
+        self._dl_success = True
 
     def get_stats(self):
-        logging.debug("end_time: %d" % self.end_time)
-        logging.debug("start_time: %d" % self.start_time)
-        stats = "[%s] [%s] [%d] [%f]" % (dlmgr.url, dlmgr.num_threads, dlmgr.content_length, (self.end_time-self.start_time)/1000)
+        if not self._dl_success:
+            logging.info("Download Failed")
+            return "Download Failed"
+        stats = "[%s] [%s] [%d] [%f]" % (self._url, self._num_threads, self._content_length, (self._end_time-self._start_time)/1000)
         return stats
 
 def parse_options():
@@ -143,4 +150,5 @@ if __name__ == "__main__":
     num_threads = args.number if args.number > 0 else 1
     dlmgr = Download_Manager(num_threads=num_threads, url=args.url)
     print(dlmgr.get_stats())
+
 

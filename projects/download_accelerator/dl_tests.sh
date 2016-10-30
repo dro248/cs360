@@ -72,8 +72,24 @@ for url in "${urls[@]}"; do
         echo
         echo "Downloading: $url with {$num} thread(s)..."
         python download_accelerator.py $d -n$num $url
-        wget $url -O 'wget_download.txt'
-        python -c "from urlparse import urlparse; path=urlparse($url).path; filename='index.html' if path=='' else path.split('/')[-1]; print path"
+        wget $url -O 'wget_download.txt' --quiet
+        filename=$(python -c "from urlparse import urlparse; path=urlparse('$url').path; filename='index.html' if path=='' else path.split('/')[-1]; print filename")
+        difference=$(diff wget_download.txt "$filename")
+        if [ -n "$difference" ]; then
+            echo "Download error. Diff as follows:"
+            if [ -z "$d" ]; then
+                wc -l "$filename"
+                wc -l wget_download.txt
+                echo "$difference"
+            fi
+            echo 'Exiting'
+            exit 1
+        else
+            echo "\"$filename\" download success."
+            rm ${filename}
+        fi
     done
+    # remove the wget download after we are done with this url
+    rm wget_download.txt
 done
 
