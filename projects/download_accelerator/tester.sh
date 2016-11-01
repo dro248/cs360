@@ -6,6 +6,12 @@ getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
     echo "I’m sorry, `getopt --test` failed in this environment."
     exit 1
+elif [[ $# -eq 0 ]]; then
+    echo 'USAGE:'
+    echo '       -d|--debug      Enable debug mode in the download accelerator'
+    echo '       -g|--gov        Download the predefined government urls'
+    echo '       -u|--url        Specify a url to download'
+    echo '       -t|--threads    Specify the number of threads to use. Default is 1'
 fi
 
 SHORT=dgu:t:
@@ -52,11 +58,13 @@ while true; do
 done
 
 if [[ $# -ge 1 ]]; then
-    echo 'Extra argumets given:'
+    echo 'Extra arguments given:'
     echo "$@"
 fi
 
-echo "gov: $f, debug: $d, link: $link, threads: $t"
+if [[ -n "$d" ]]; then
+    echo "gov: $g, debug: $d, link: $link, threads: $t"
+fi
 
 if [ -n "$g" ]; then
     # set the urls to the government ones

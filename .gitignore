@@ -58,3 +58,9 @@ unix-echo-client
 *.lai
 *.la
 *.a
+
+#python environments
+**env
+
+#compressed files
+*.tgz
