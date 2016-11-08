@@ -76,11 +76,11 @@ else
 fi
 
 for url in "${urls[@]}"; do
+    wget $url -O 'wget_download.txt' --quiet
     for num in 1 2 5 $t; do
         echo
         echo "Downloading: $url with {$num} thread(s)..."
         python download_accelerator.py $d -n$num $url
-        wget $url -O 'wget_download.txt' --quiet
         filename=$(python -c "from urlparse import urlparse; path=urlparse('$url').path; filename='index.html' if path=='' else path.split('/')[-1]; print filename")
         difference=$(diff wget_download.txt "$filename")
         if [ -n "$difference" ]; then
