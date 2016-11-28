@@ -1,0 +1,28 @@
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+    ts_config_server:(5:<0.52.0>) Config server started, logdir is "/home/david/.tsung/log/20161128-1537"
+ 
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+              ts_mon:(5:<0.51.0>) starting monitor, global 
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+           ts_config:(5:<0.52.0>) Reading config file: 200.xml
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+           ts_config:(5:<0.52.0>) Session name for id 1 is "es_load"
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+    ts_config_server:(4:<0.52.0>) SYSINFO:Tsung version: 1.5.1
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+    ts_config_server:(4:<0.52.0>) SYSINFO:Erlang version: Erlang/OTP 18 [erts-7.3] [source] [64-bit] [smp:4:4] [async-threads:16] [hipe] [kernel-poll:true]
+
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+    ts_config_server:(4:<0.52.0>) SYSINFO:System architecture x86_64-pc-linux-gnu
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+    ts_config_server:(4:<0.52.0>) SYSINFO:Current path: /usr/lib/erlang/lib/tsung-1.5.1/ebin/tsung.beam
+
+=INFO REPORT==== 28-Nov-2016::15:37:18 ===
+         ts_launcher:(2:<0.85.0>) WARNING !!! too few file descriptors available (1024), you should decrease maxusers (currently 30000000)
