@@ -12,6 +12,7 @@ class Server:
         self.clients = {}
         self.caches = {}
         self.messages = {}
+        self.keys = {}
         self.size = 10024
         self.parse_options()
         self.open_socket()
@@ -161,6 +162,29 @@ class Server:
                 return "error no such message for that user\n"
             response = "message %s %d\n" % (subject,len(data))
             response += data
+            return response
+        if fields[0] == 'store_key':
+            try:
+                name = fields[1]
+                length = int(fields[2])
+            except:
+                return('error invalid message\n')
+            key = self.read_put(length,fd)
+            if not key:
+                return('error invalid key\n')
+            else:
+                self.keys[name] = key
+                return('OK\n')
+        if fields[0] == 'get_key':
+            try:
+                name = fields[1]
+            except:
+                return('error invalid request\n')
+            try:
+                key = self.keys[name]
+            except KeyError:
+                return('error that user doesn\'t exist\n')
+            response = "key %i\n%s" % (len(key), key)
             return response
         return('error invalid message\n')
     
