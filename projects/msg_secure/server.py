@@ -1,9 +1,14 @@
+from Crypto.PublicKey import RSA
+from Crypto import Random
 import optparse
 import socket
 import sys
 import select
 import errno
 import traceback
+
+import logging
+import argparse
 
 class Server:
     def __init__(self,port):
@@ -14,20 +19,8 @@ class Server:
         self.messages = {}
         self.keys = {}
         self.size = 10024
-        self.parse_options()
         self.open_socket()
         self.run()
-
-    def parse_options(self):
-        parser = optparse.OptionParser(usage = "%prog [options]",
-                                       version = "%prog 0.1")
-
-        parser.add_option("-p","--port",type="int",dest="port",
-                          default=5000,
-                          help="port to listen on")
-
-        (options,args) = parser.parse_args()
-        self.port = options.port
 
     def open_socket(self):
         """ Setup the socket for incoming clients """
@@ -182,8 +175,9 @@ class Server:
                 return('error invalid request\n')
             try:
                 key = self.keys[name]
+                logging.debug("KEY: %s" % key)
             except KeyError:
-                return('error that user doesn\'t exist\n')
+                return('error user doesn\'t exist\n')
             response = "key %i\n%s" % (len(key), key)
             return response
         return('error invalid message\n')
@@ -224,5 +218,16 @@ class Server:
     def send_response(self,response,fd):
         self.clients[fd].send(response)
 
+def parse_options():
+    parser = argparse.ArgumentParser(prog="Insecure encrypted chat server", description="chat server.", add_help=True)
+    parser.add_argument("-d", "--debug", action="store_true", help="Turn on logging")
+    parser.add_argument("-p", "--port", type=int, action="store", help="The port on which to host the server",default=1111)
+    return parser.parse_args() 
+
 if __name__ == '__main__':
-    s = Server(5000)
+    args = parse_options()
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR)
+    try:
+        s = Server(args.port)
+    except KeyboardInterrupt:
+        logging.info("Exiting the server bruh.")

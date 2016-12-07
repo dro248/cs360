@@ -1,7 +1,12 @@
+from Crypto.PublicKey import RSA
+from Crypto import Random
 import fileinput
 import optparse
 import socket
 import sys
+
+import argparse
+import logging
 
 class Client:
     def __init__(self,host,port):
@@ -10,27 +15,11 @@ class Client:
         self.server = None
         self.cache = ''
         self.messages = {}
-        self.size = 1024
-        self.parse_options()
+        self.key = None
+        self.name = ''
+        self.size = 10024
         self.open_socket()
         self.run()
-
-    def parse_options(self):
-        parser = optparse.OptionParser(usage = "%prog [options]",
-                                       version = "%prog 0.1")
-
-        parser.add_option("-p","--port",type="int",dest="port",
-                          default=5000,
-                          help="port to connect to")
-
-        parser.add_option("-s","--server",type="string",dest="host",
-                          default='localhost',
-                          help="server to connect to")
-
-        (options,args) = parser.parse_args()
-        self.host = options.host
-        self.port = options.port
-
 
     def open_socket(self):
         """ Connect to the server """
@@ -71,6 +60,9 @@ class Client:
             except:
                 return False
             data = self.get_user_message()
+            key = self.get_key(name)
+            data = key.publickey().encrypt(data, 0)[0]
+            print "The encrypted data:",data
             self.send_put(name,subject,data)
             self.response_to_put()
             return True
@@ -92,6 +84,15 @@ class Client:
                 return False
             self.send_read(name,index)
             self.response_to_read()
+            return True
+        if fields[0] == 'login':
+            try:
+                self.name = fields[1]
+            except:
+                return False
+            self.gen_key_pair()
+            self.send_login(self.key.publickey().exportKey())
+            self.response_to_login()
             return True
         return False
 
@@ -121,6 +122,55 @@ class Client:
 
     def send_request(self,request):
         self.server.sendall(request)
+
+    ### Handling login ###
+    
+    def send_login(self,pub_key):
+        """ Pub key should be the exported text version """
+        self.send_request("store_key %s %i\n%s" % (self.name, len(pub_key), pub_key))
+
+    def gen_key_pair(self):
+        random_generator = Random.new().read
+        self.key = RSA.generate(2048, random_generator)
+
+    def response_to_login(self):
+        message = self.get_response()
+        if message != "OK\n":
+            print "Server returned bad message:",message
+            return
+
+    ### Handling encryption ###
+
+    def get_key(self, name):
+        self.send_request("get_key %s\n" % name)
+        message = self.get_response()
+        fields = message.split()
+        try:
+            if fields[0] != 'key':
+                print "server returned bad message:", message
+                return
+            length = int(fields[1])
+        except:
+            print "server returned bad message",message
+            return 
+        pub_key = self.get_key_response(length)
+        return RSA.importKey(pub_key)
+
+    def get_key_response(self,length):
+        data = self.cache
+        while len(data) < length:
+            d = self.server.recv(self.size)
+            if not d:
+                self.cache = ''
+                logging.info("Server did not send the whole message: %s"%data)
+                return None
+            data += d
+        if data > length:
+            self.cache = data[length:]
+            data = data[:length]
+        else:
+            self.cache = ''
+        return data
 
     ### Handling send ###
 
@@ -204,7 +254,18 @@ class Client:
             self.cache = ''
         print subject
         print data,
-    
+
+def parse_options():
+    parser = argparse.ArgumentParser(prog="Insecure encrypted chat server", description="chat server.", add_help=True)
+    parser.add_argument("-d", "--debug", action="store_true", help="Turn on logging")
+    parser.add_argument("-p", "--port", type=int, action="store", help="The port on which to host the server",default=1111)
+    return parser.parse_args() 
 
 if __name__ == '__main__':
-    s = Client('',5000)
+    args = parse_options()
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.ERROR)
+    try:
+        s = Client('localhost',args.port)
+    except KeyboardInterrupt:
+        logging.info("Exiting, son.")
+
