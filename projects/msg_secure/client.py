@@ -62,7 +62,6 @@ class Client:
             data = self.get_user_message()
             key = self.get_key(name)
             data = key.publickey().encrypt(data, 0)[0]
-            print "The encrypted data:",data
             self.send_put(name,subject,data)
             self.response_to_put()
             return True
@@ -83,7 +82,17 @@ class Client:
             except:
                 return False
             self.send_read(name,index)
-            self.response_to_read()
+            self.response_to_read(dec=True)
+            return True
+        if fields[0] == 'peek':
+            ### read message ###
+            try:
+                name = fields[1]
+                index = int(fields[2])
+            except:
+                return False
+            self.send_read(name,index)
+            self.response_to_read(dec=False)
             return True
         if fields[0] == 'login':
             try:
@@ -224,7 +233,7 @@ class Client:
     def send_read(self,name,index):
         self.send_request("get %s %s\n" % (name, index))
 
-    def response_to_read(self):
+    def response_to_read(self,dec):
         message = self.get_response()
         fields = message.split()
         try:
@@ -236,9 +245,9 @@ class Client:
         except:
             print "Server returned bad message:",message
             return
-        self.read_message_response(subject,length)
+        self.read_message_response(subject,length,dec)
 
-    def read_message_response(self,subject,length):
+    def read_message_response(self,subject,length,dec):
         data = self.cache
         while len(data) < length:
             d = self.server.recv(self.size)
@@ -253,7 +262,10 @@ class Client:
         else:
             self.cache = ''
         print subject
-        print data,
+        if dec:
+            print self.key.decrypt(data)
+        else:
+            print data
 
 def parse_options():
     parser = argparse.ArgumentParser(prog="Insecure encrypted chat server", description="chat server.", add_help=True)
