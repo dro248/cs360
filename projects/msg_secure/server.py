@@ -203,11 +203,6 @@ class Server:
 
     def read_put(self,length,fd):
         data = self.caches[fd]
-        while len(data) < length:
-            d = self.clients[fd].recv(self.size)
-            if not d:
-                return None
-            data += d
         if len(data) > length:
             self.caches[fd] = data[length:]
             data = data[:length]
