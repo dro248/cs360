@@ -120,8 +120,10 @@ class Download_Manager():
     def write_to_file(self):
         """ Puts the downloaded content back together again """
         path = urlparse(self._url).path
+        logging.debug(path)
         if path is not "":
             filename = path.split("/")[-1]
+            filename = filename if len(filename) > 0 else "index.html"
         else:
             filename = "index.html"
         logging.info("writing to %s" % filename)
